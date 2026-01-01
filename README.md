@@ -27,7 +27,7 @@ int main() {
 
 ## API
 
-### `variant<Types...>`
+> variant<Types...>
 
 | Method | Description |
 |--------|-------------|
@@ -61,10 +61,11 @@ Comparison against `std::variant` (GCC, -O3, 10M iterations):
 | Assignment (type change) | 0.46 ns | 0.59 ns | **1.27x** |
 | Index query | 0.12 ns | 0.25 ns | **2.06x** |
 
-*TODO*
-- [] optimmize string copy construction
-- [] implementation std::visit
-- [] implementation of std::holds_alternative
-- [] Exception safety guarantees (valueless_by_exception state)
-- [] Copy/move constructors 
+TODO
+
+- [ ] optimmize string copy construction
+- [ ] implementation std::visit
+- [ ] implementation of std::holds_alternative
+- [ ] Exception safety guarantees (valueless_by_exception state)
+- [ ] Copy/move constructors 
 

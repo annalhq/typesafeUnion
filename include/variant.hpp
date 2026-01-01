@@ -34,6 +34,8 @@ template <typename Type> union variant_storage<Type> {
   variant_storage(std::integral_constant<size_t, 0>, Other &&value)
       : value(std::forward<Other>(value)) {}
 
+  ~variant_storage() {}
+
   template <size_t INDEX> auto &get() { return value; }
 
   template <size_t INDEX, typename Other> void emplace(Other &&val) {

@@ -1,6 +1,7 @@
 #ifndef VARIANT_HPP
 #define VARIANT_HPP
 #include <cstddef>
+#include <new>
 #include <type_traits>
 #include <utility>
 
@@ -34,6 +35,10 @@ template <typename Type> union variant_storage<Type> {
       : value(std::forward<Other>(value)) {}
 
   template <size_t INDEX> auto &get() { return value; }
+
+  template <size_t INDEX, typename Other> void emplace(Other &&val) {
+    new (&value) Type(std::forward<Other>(val));
+  }
   void destroy(size_t /*index*/) { value.~Type(); }
 
   Type value;
@@ -57,6 +62,13 @@ union variant_storage<Type, Types...> {
       return value;
     else
       return rest.template get<INDEX - 1>();
+  }
+
+  template <size_t INDEX, typename Other> void emplace(Other &&val) {
+    if constexpr (INDEX == 0)
+      new (&value) Type(std::forward<Other>(val));
+    else
+      rest.template emplace<INDEX - 1>(std::forward<Other>(val));
   }
 
   void destroy(size_t index) {
@@ -98,7 +110,7 @@ public:
     constexpr size_t ind = get_index_type<DecayedType, Types...>::value;
     storage.destroy(index);
     index = ind;
-    get<ind>() = std::forward<Type>(value);
+    storage.template emplace<ind>(std::forward<Type>(value));
     return *this;
   }
 

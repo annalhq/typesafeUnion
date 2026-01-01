@@ -33,7 +33,7 @@ template <typename Type> union variant_storage<Type> {
 
   template <size_t INDEX> auto &get() { return value; }
 
-  void destroy() { value.~Type(); }
+  void destroy(size_t /*index*/) { value.~Type(); }
   Type value;
 };
 
@@ -103,7 +103,9 @@ private:
 };
 
 int main() {
+  variant<int, std::string, size_t> var;
 
+#if 0
   /*
    * std::variant is a type-safe union, at any given moment,
    * it stores only one of the listed types.
@@ -122,4 +124,5 @@ int main() {
 
   var = size_t(1234);
   std::cout << "size_t: " << std::get<2>(var) << std::endl;
+#endif
 }

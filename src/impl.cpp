@@ -23,23 +23,48 @@ struct get_index_type<T, Head, Tail...> {
   static constexpr size_t value = 1 + get_index_type<T, Tail...>::value;
 };
 
+template <typename... Types> union variant_storage;
+
 // base case for variant_storage
 template <typename Type> union variant_storage<Type> {
   template <typename Other>
   variant_storage(std::integral_constant<size_t, 0>, Other &&value)
       : value(std::forward<Other>(value)) {}
 
-  template <size INDEX> auto &get() { return value; }
+  template <size_t INDEX> auto &get() { return value; }
 
   void destroy() { value.~Type(); }
   Type value;
 };
 
 // general case for variant_storage
-template <typename Type, typename... Types> union variant_storage {
+template <typename Type, typename... Types>
+union variant_storage<Type, Types...> {
 
   template <typename Other>
-  variant_storage(std::integral_constant<size_t, 0>, Other &&val);
+  variant_storage(std::integral_constant<size_t, 0>, Other &&val)
+      : value(std::forward<Other>(val)) {}
+
+  template <std::size_t INDEX, typename Other>
+  variant_storage(std::integral_constant<size_t, INDEX>, Other &&val)
+      : rest(std::integral_constant<size_t, INDEX - 1>{},
+             std::forward<Other>(val)) {}
+
+  template <size_t INDEX> auto &get() {
+    if constexpr (INDEX == 0)
+      return value;
+    else
+      return rest.template get<INDEX - 1>();
+  }
+
+  void destroy(size_t index) {
+    if (index == 0)
+      value.~Type();
+    else
+      rest.destroy(index - 1);
+  }
+
+  ~variant_storage() {}
 
   Type value;
   variant_storage<Types...> rest;
@@ -60,13 +85,12 @@ public:
 
   ~variant() { storage.destroy(index); }
 
-  template <size_t INDEX> auto &get() {
-    return variant_storage.template get<INDEX>();
-  }
+  template <size_t INDEX> auto &get() { return storage.template get<INDEX>(); }
 
+  // assignment operator with template acceptance
   template <typename Type> auto &operator=(Type &&value) {
     constexpr size_t ind = get_index_type<Type, Types...>::value;
-    variant_storage.destroy(index);
+    storage.destroy(index);
     index = ind;
     get<ind>() = std::move(value);
     return *this;

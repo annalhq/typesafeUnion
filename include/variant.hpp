@@ -81,10 +81,11 @@ public:
 
   template <typename Type>
   variant(Type &&value)
-      : index(get_index_type<Type, Types...>::value),
-        storage(std::integral_constant<size_t,
-                                       get_index_type<Type, Types...>::value>{},
-                std::forward<Type>(value)) {}
+      : index(get_index_type<std::decay_t<Type>, Types...>::value),
+        storage(
+            std::integral_constant<
+                size_t, get_index_type<std::decay_t<Type>, Types...>::value>{},
+            std::forward<Type>(value)) {}
 
   ~variant() { storage.destroy(index); }
 
@@ -93,10 +94,11 @@ public:
 
   // assignment operator with template acceptance
   template <typename Type> auto &operator=(Type &&value) {
-    constexpr size_t ind = get_index_type<Type, Types...>::value;
+    using DecayedType = std::decay_t<Type>;
+    constexpr size_t ind = get_index_type<DecayedType, Types...>::value;
     storage.destroy(index);
     index = ind;
-    get<ind>() = std::move(value);
+    get<ind>() = std::forward<Type>(value);
     return *this;
   }
 
